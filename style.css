@@ -1,0 +1,510 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --primary: #007AFF;
+  --primary-dark: #0056CC;
+  --primary-light: #5AC8FA;
+  --bg: #F2F2F7;
+  --bg-card: #FFFFFF;
+  --bg-input: #E5E5EA;
+  --text: #1C1C1E;
+  --text-dim: #8E8E93;
+  --danger: #FF3B30;
+  --success: #34C759;
+  --separator: rgba(60,60,67,0.12);
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', 'Noto Sans SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Page System ===== */
+.page {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  transition: opacity 0.3s;
+  background: var(--bg);
+}
+.page.hidden {
+  display: none;
+}
+
+/* ===== PIN Lock Screen ===== */
+.pin-container {
+  width: 100%;
+  max-width: 400px;
+  padding: 40px 30px;
+  text-align: center;
+  background: var(--bg);
+}
+.pin-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0,122,255,0.25);
+}
+.pin-icon svg {
+  width: 36px;
+  height: 36px;
+  fill: #fff;
+}
+.pin-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
+}
+.pin-subtitle {
+  font-size: 15px;
+  color: var(--text-dim);
+  margin-bottom: 32px;
+  min-height: 22px;
+}
+.pin-lockdown-timer {
+  font-size: 48px;
+  font-weight: 200;
+  color: var(--text);
+  margin-top: 20px;
+  letter-spacing: 2px;
+}
+
+/* PIN Dots */
+.pin-dots {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 40px;
+  min-height: 16px;
+}
+.pin-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--text-dim);
+  background: transparent;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.pin-dot.filled {
+  background: var(--text);
+  border-color: var(--text);
+  transform: scale(1.1);
+}
+.pin-dot.error {
+  border-color: var(--danger);
+  background: var(--danger);
+  animation: shake 0.4s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+/* PIN Keyboard */
+.pin-keyboard {
+  display: grid;
+  grid-template-columns: repeat(3, 80px);
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.pin-key {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 30px;
+  font-weight: 300;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  -webkit-user-select: none;
+  user-select: none;
+}
+.pin-key:active {
+  background: var(--bg-input);
+  transform: scale(0.95);
+}
+.pin-key.key-delete {
+  font-size: 20px;
+  background: transparent;
+  color: var(--text-dim);
+  box-shadow: none;
+  font-weight: 400;
+}
+.pin-key.key-empty {
+  background: transparent;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+.pin-divider {
+  height: 1px;
+  background: var(--separator);
+  margin: 28px 40px;
+}
+
+.pin-btn-clear {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  padding: 12px 40px;
+  font-size: 16px;
+  font-weight: 400;
+  cursor: pointer;
+  margin-top: 8px;
+}
+.pin-btn-clear:active {
+  opacity: 0.5;
+}
+
+/* ===== Main Page ===== */
+.main-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+.main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  background: var(--bg-card);
+  border-bottom: 0.5px solid var(--separator);
+}
+.main-title {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.header-actions {
+  display: flex;
+  gap: 4px;
+}
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-weight: 400;
+  font-size: 15px;
+}
+.icon-btn:active {
+  background: var(--bg-input);
+}
+.icon-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: var(--primary);
+}
+
+/* Sync Indicator */
+.sync-indicator {
+  position: absolute;
+  top: max(24px, calc(env(safe-area-inset-top) + 24px));
+  right: 68px;
+}
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.sync-idle { background: #C7C7CC; }
+.sync-active { background: var(--primary); animation: pulse 1.5s infinite; }
+.sync-done { background: var(--success); }
+.sync-error { background: var(--danger); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.4); }
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  -webkit-overflow-scrolling: touch;
+}
+.view.hidden { display: none; }
+
+/* Welcome */
+.welcome-box {
+  text-align: center;
+  padding: 80px 30px 40px;
+}
+.welcome-icon {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 28px;
+  background: linear-gradient(135deg, #FF9F0A, #FF6723);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(255,103,35,0.2);
+}
+.welcome-icon svg {
+  width: 48px;
+  height: 48px;
+  fill: #fff;
+}
+.welcome-box h2 {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.welcome-box p {
+  color: var(--text-dim);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.welcome-hint {
+  margin-top: 24px;
+  font-size: 13px !important;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+/* Timeline */
+.timeline-date {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  padding: 20px 20px 10px;
+}
+.timeline-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+  padding: 0;
+}
+.timeline-thumb {
+  aspect-ratio: 1;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--bg-input);
+}
+.timeline-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Photo Viewer */
+.photo-viewer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #000;
+}
+.viewer-back {
+  align-self: flex-start;
+  background: rgba(0,0,0,0.4);
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  padding: 14px 18px;
+  cursor: pointer;
+  border-radius: 12px;
+  margin: 12px;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.viewer-img {
+  max-width: 100%;
+  max-height: calc(100vh - 80px);
+  object-fit: contain;
+}
+
+/* Upload Area */
+.upload-area {
+  padding: 12px 20px;
+  padding-bottom: max(20px, calc(env(safe-area-inset-bottom) + 12px));
+  background: var(--bg-card);
+  border-top: 0.5px solid var(--separator);
+}
+.upload-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: -0.2px;
+}
+.upload-label:active {
+  background: var(--primary-dark);
+  transform: scale(0.98);
+}
+.upload-icon {
+  font-size: 20px;
+}
+
+/* ===== Settings (iOS Style) ===== */
+.settings-container {
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  background: var(--bg-card);
+  border-bottom: 0.5px solid var(--separator);
+}
+.settings-back {
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  font-size: 17px;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-weight: 400;
+}
+.settings-title {
+  font-size: 17px;
+  font-weight: 600;
+}
+.settings-list {
+  padding: 24px 20px;
+  padding-bottom: max(60px, calc(env(safe-area-inset-bottom) + 30px));
+}
+.settings-section {
+  margin-bottom: 28px;
+}
+.section-title {
+  font-size: 13px;
+  color: var(--text-dim);
+  padding: 0 0 8px 16px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.settings-group {
+  background: var(--bg-card);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 0.5px solid var(--separator);
+  cursor: pointer;
+  min-height: 44px;
+}
+.settings-item:last-child {
+  border-bottom: none;
+}
+.item-label {
+  font-size: 17px;
+  font-weight: 400;
+}
+.item-value {
+  font-size: 17px;
+  color: var(--text-dim);
+}
+.item-arrow {
+  font-size: 17px;
+  color: #C7C7CC;
+  font-weight: 300;
+}
+
+/* Toggle Switch (iOS style) */
+.toggle {
+  position: relative;
+  width: 51px;
+  height: 31px;
+  flex-shrink: 0;
+}
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-slider {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #E5E5EA;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 27px;
+  height: 27px;
+  left: 2px;
+  bottom: 2px;
+  background: #fff;
+  border-radius: 50%;
+  transition: 0.3s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+.toggle input:checked + .toggle-slider {
+  background: var(--success);
+}
+.toggle input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar { width: 0; }
