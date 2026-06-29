@@ -58,6 +58,139 @@
   </div>
 </div>
 
+<!-- 主页面 -->
+<div id="page-main" class="page hidden">
+  <div class="main-container">
+    <div class="main-header">
+      <h1 class="main-title">管理员</h1>
+      <div class="header-actions">
+        <button class="icon-btn" id="btn-upload" title="上传照片">
+          <svg viewBox="0 0 24 24"><path d="M19 7h-8v6h-2l5 5 5-5h-2V7zm-14 11v-2h2v2h10v-2h2v2c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2z"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-settings" title="设置">
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="sync-indicator" id="sync-indicator">
+      <div class="sync-dot sync-idle"></div>
+    </div>
+
+    <div class="main-content" id="main-content">
+      <div id="view-welcome" class="view">
+        <div class="welcome-box">
+          <div class="welcome-icon">
+            <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+          </div>
+          <h2>欢迎使用相册备份</h2>
+          <p>点击下方按钮选择照片上传到百度网盘</p>
+          <p class="welcome-hint">上传全程静默进行，不会打扰你</p>
+        </div>
+      </div>
+
+      <div id="view-timeline" class="view hidden">
+        <div class="timeline-list" id="timeline-list"></div>
+      </div>
+
+      <div id="view-photo-viewer" class="view hidden">
+        <div class="photo-viewer">
+          <button class="viewer-back" id="btn-viewer-back">完成</button>
+          <img class="viewer-img" id="viewer-img" src="" alt="">
+        </div>
+      </div>
+    </div>
+
+    <div class="upload-area">
+      <input type="file" id="file-input" accept="image/*" multiple hidden>
+      <label for="file-input" class="upload-label">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M19 7h-8v6h-2l5 5 5-5h-2V7zm-14 11v-2h2v2h10v-2h2v2c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2z"/></svg>
+        <span>选择照片上传</span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- 设置页面 -->
+<div id="page-settings" class="page hidden">
+  <div class="settings-container">
+    <div class="settings-header">
+      <button class="settings-back" id="btn-settings-back">返回</button>
+      <h1 class="settings-title">设置</h1>
+    </div>
+
+    <div class="settings-list">
+      <div class="settings-section">
+        <h3 class="section-title">百度网盘</h3>
+        <div class="settings-group">
+          <div class="settings-item" id="baidu-auth-item">
+            <span class="item-label">授权登录</span>
+            <span class="item-value" id="baidu-auth-status">未授权</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3 class="section-title">安全</h3>
+        <div class="settings-group">
+          <div class="settings-item" id="btn-change-pin">
+            <span class="item-label">修改密码</span>
+            <span class="item-arrow">›</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3 class="section-title">上传设置</h3>
+        <div class="settings-group">
+          <div class="settings-item">
+            <span class="item-label">仅 WiFi 上传</span>
+            <label class="toggle">
+              <input type="checkbox" id="toggle-wifi" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="settings-item">
+            <span class="item-label">上传前压缩</span>
+            <label class="toggle">
+              <input type="checkbox" id="toggle-compress">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3 class="section-title">关于</h3>
+        <div class="settings-group">
+          <div class="settings-item">
+            <span class="item-label">版本</span>
+            <span class="item-value">1.0.0</span>
+          </div>
+          <div class="settings-item" id="btn-clear-data">
+            <span class="item-label" style="color: var(--danger);">清除所有数据</span>
+            <span class="item-arrow">›</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 修改密码页面 -->
+<div id="page-change-pin" class="page hidden">
+  <div class="pin-container">
+    <div class="pin-icon" style="background: linear-gradient(135deg, #FF9F0A, #FF6723);">
+      <svg viewBox="0 0 24 24"><path d="M12.65 10A5.99 5.99 0 007 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c1.66 0 3.14-.69 4.22-1.78l1.42 1.42A8.003 8.003 0 0118 16.01 7.95 7.95 0 0112.65 10zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM19 3h-2v2h2v2h2V5h2V3h-2V1h-2v2zm0 10h2v2h-2v2h-2v-2h-2v-2h2v-2h2v2z"/></svg>
+    </div>
+    <h1 class="pin-title">修改密码</h1>
+    <p class="pin-subtitle" id="change-step-label">输入旧密码</p>
+    <div class="pin-dots" id="change-dots"></div>
+    <div class="pin-keyboard" id="change-keyboard"></div>
+    <button class="pin-btn-clear" id="btn-clear-change">清除</button>
+  </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>
