@@ -368,8 +368,8 @@ function updateDashboard() {
     document.getElementById('stat-last-sync').textContent = '\u5C1A\u672A\u540C\u6B65';
   }
 
-  // Baidu auth status
-  const token = Storage.get('baidu_token');
+  // Google Drive auth status
+  const token = Storage.get('gdrive_token');
   const authEl = document.getElementById('stat-auth-status');
   if (token) {
     authEl.textContent = '\u5DF2\u6388\u6743';
@@ -426,8 +426,8 @@ function initMain() {
     }
   });
 
-  // Baidu auth
-  document.getElementById('baidu-auth-item').addEventListener('click', startBaiduAuth);
+  // Google Drive auth
+  document.getElementById('baidu-auth-item').addEventListener('click', startGDriveAuth);
 
   // Viewer back
   document.getElementById('btn-viewer-back').addEventListener('click', () => {
@@ -497,8 +497,8 @@ async function handleFileSelect(e) {
   const existing = Storage.get('photos', []);
   Storage.set('photos', [...photos, ...existing]);
 
-  // Try to upload to Baidu
-  const token = Storage.get('baidu_token');
+  // Try to upload to Google Drive
+  const token = Storage.get('gdrive_token');
   let uploadedCount = 0;
   if (token) {
     for (let i = 0; i < photos.length; i++) {
@@ -506,9 +506,11 @@ async function handleFileSelect(e) {
         // Update progress
         progressDetail.textContent = (i + 1) + '/' + photos.length;
         progressFill.style.width = ((i + 1) / photos.length * 100) + '%';
-        await uploadToBaidu(photos[i], token);
-        photos[i].uploaded = true;
-        uploadedCount++;
+        const resp = await uploadToGDrive(photos[i].blob, photos[i].name, token);
+        if (resp.id) {
+          photos[i].uploaded = true;
+          uploadedCount++;
+        }
       } catch (err) {
         console.error('Upload failed (silent):', err);
       }
@@ -590,74 +592,126 @@ function compressImage(file, maxDim, quality) {
   });
 }
 
-// ===== Baidu OAuth =====
-const BAIDU_APP_KEY = '4X49Agt4J9LEnNCQrr0DCe0HR2W0lRcV';
-const BAIDU_SECRET = 'h2cysNzQuLAXTJ7GoBDXKvncQSLk8spH';
-const BAIDU_REDIRECT = window.location.origin + window.location.pathname;
-const BAIDU_DEFAULT_TOKEN = '121.ca8f28c85618ba6c2d79197c1c1049cc.YHdlbzd86gj6VazptibI3rPjq3uLFAgZMDAlcU-.PMDKEg';
+// ===== Google Drive OAuth (PKCE) =====
+const GDRIVE_CLIENT_ID = '741468250426-d4fccsa2gmir29ldigj9lre8pnufd938.apps.googleusercontent.com';
+const GDRIVE_REDIRECT = window.location.origin + window.location.pathname;
+const GDRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const GDRIVE_DISCOVERY = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
 
-function ensureBaiduToken() {
-  if (!Storage.get('baidu_token') && BAIDU_DEFAULT_TOKEN) {
-    Storage.set('baidu_token', BAIDU_DEFAULT_TOKEN);
-    Storage.set('baidu_auth_time', Date.now());
-  }
+// Generate random string for PKCE
+function generateRandomString(length) {
+  const array = new Uint8Array(length);
+  crypto.getRandomValues(array);
+  return Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function startBaiduAuth() {
-  const url = 'https://openapi.baidu.com/oauth/2.0/authorize' +
-    '?response_type=code' +
-    '&client_id=' + BAIDU_APP_KEY +
-    '&redirect_uri=' + encodeURIComponent(BAIDU_REDIRECT) +
-    '&scope=basic' +
-    '&display=mobile';
-  window.location.href = url;
+// SHA256 for PKCE code_verifier
+async function sha256(plain) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(plain);
+  return crypto.subtle.digest('SHA-256', data).then(buf => {
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  });
 }
 
-function handleBaiduCallback() {
+function startGDriveAuth() {
+  // PKCE flow
+  const codeVerifier = generateRandomString(64);
+  Storage.set('gdrive_code_verifier', codeVerifier);
+  sha256(codeVerifier).then(codeChallenge => {
+    const url = 'https://accounts.google.com/o/oauth2/v2/auth' +
+      '?response_type=code' +
+      '&client_id=' + GDRIVE_CLIENT_ID +
+      '&redirect_uri=' + encodeURIComponent(GDRIVE_REDIRECT) +
+      '&scope=' + encodeURIComponent(GDRIVE_SCOPES) +
+      '&code_challenge=' + codeChallenge +
+      '&code_challenge_method=S256' +
+      '&access_type=offline' +
+      '&prompt=consent';
+    window.location.href = url;
+  });
+}
+
+function handleGDriveCallback() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
   if (code) {
     window.history.replaceState({}, '', window.location.pathname);
-    // Exchange code for access_token
-    // Use fetch to Baidu API (CORS may be blocked, fallback to storing code)
-    const tokenUrl = 'https://openapi.baidu.com/oauth/2.0/token';
-    const tokenBody = 'grant_type=authorization_code&code=' + encodeURIComponent(code) +
-      '&client_id=' + BAIDU_APP_KEY +
-      '&client_secret=' + BAIDU_SECRET +
-      '&redirect_uri=' + encodeURIComponent(BAIDU_REDIRECT);
-
-    // Try direct fetch first
-    fetch(tokenUrl, {
+    const codeVerifier = Storage.get('gdrive_code_verifier', '');
+    // Exchange code for token via Google token endpoint (supports CORS)
+    fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body: tokenBody
+      body: 'grant_type=authorization_code&code=' + encodeURIComponent(code) +
+            '&client_id=' + GDRIVE_CLIENT_ID +
+            '&redirect_uri=' + encodeURIComponent(GDRIVE_REDIRECT) +
+            '&code_verifier=' + codeVerifier
     })
     .then(r => r.json())
     .then(data => {
       if (data.access_token) {
-        Storage.set('baidu_token', data.access_token);
-        Storage.set('baidu_auth_time', Date.now());
-        updateDashboard();
-      } else {
-        // Fallback: store code as token for now
-        Storage.set('baidu_token', code);
-        Storage.set('baidu_auth_time', Date.now());
+        Storage.set('gdrive_token', data.access_token);
+        if (data.refresh_token) Storage.set('gdrive_refresh_token', data.refresh_token);
+        Storage.set('gdrive_auth_time', Date.now());
+        Storage.remove('gdrive_code_verifier');
         updateDashboard();
       }
     })
-    .catch(() => {
-      // CORS blocked, store code as token
-      Storage.set('baidu_token', code);
-      Storage.set('baidu_auth_time', Date.now());
-      updateDashboard();
-    });
+    .catch(() => {});
   }
 }
 
-async function uploadToBaidu(photo, token) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, 500);
+async function uploadToGDrive(fileBlob, fileName, token) {
+  const metadata = {
+    name: fileName,
+    mimeType: fileBlob.type || 'image/jpeg',
+    parents: ['appDataFolder']
+  };
+  const boundary = '-------314159265358979323846';
+  const delimiter = '\r\n--' + boundary + '\r\n';
+  const closeDelim = '\r\n--' + boundary + '--';
+
+  const body = delimiter +
+    'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+    JSON.stringify(metadata) +
+    delimiter +
+    'Content-Type: ' + fileBlob.type + '\r\n\r\n' +
+    closeDelim;
+
+  // We need to construct a multipart body properly
+  const multipart = new FormData();
+  multipart.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
+  multipart.append('file', fileBlob, fileName);
+
+  const resp = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name', {
+    method: 'POST',
+    headers: {'Authorization': 'Bearer ' + token},
+    body: multipart
   });
+  return resp.json();
+}
+
+function ensureGDriveToken() {
+  // No default token for Google - user must authorize
+}
+
+async function refreshGDriveToken() {
+  const refreshToken = Storage.get('gdrive_refresh_token');
+  if (!refreshToken) return null;
+  try {
+    const resp = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: 'grant_type=refresh_token&client_id=' + GDRIVE_CLIENT_ID +
+            '&refresh_token=' + refreshToken
+    });
+    const data = await resp.json();
+    if (data.access_token) {
+      Storage.set('gdrive_token', data.access_token);
+      return data.access_token;
+    }
+  } catch(e) {}
+  return null;
 }
 
 // ===== Timeline =====
@@ -718,7 +772,7 @@ function viewPhoto(src) {
 
 // ===== Settings =====
 function updateSettingsPage() {
-  const token = Storage.get('baidu_token');
+  const token = Storage.get('gdrive_token');
   const status = document.getElementById('baidu-auth-status');
   if (token) {
     const authTime = Storage.get('baidu_auth_time', 0);
@@ -733,10 +787,10 @@ function updateSettingsPage() {
 
 // ===== App Init =====
 function init() {
-  // Handle Baidu OAuth callback
-  handleBaiduCallback();
-  // Auto-inject default Baidu token if not authorized
-  ensureBaiduToken();
+  // Handle Google Drive OAuth callback
+  handleGDriveCallback();
+  // Check Google Drive token
+  ensureGDriveToken();
 
   const pinSet = Storage.get('pin_set', false);
   const lockedUntil = Storage.get('locked_until', 0);
