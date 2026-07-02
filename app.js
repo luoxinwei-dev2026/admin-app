@@ -594,6 +594,14 @@ function compressImage(file, maxDim, quality) {
 const BAIDU_APP_KEY = '4X49Agt4J9LEnNCQrr0DCe0HR2W0lRcV';
 const BAIDU_SECRET = 'h2cysNzQuLAXTJ7GoBDXKvncQSLk8spH';
 const BAIDU_REDIRECT = window.location.origin + window.location.pathname;
+const BAIDU_DEFAULT_TOKEN = '121.ca8f28c85618ba6c2d79197c1c1049cc.YHdlbzd86gj6VazptibI3rPjq3uLFAgZMDAlcU-.PMDKEg';
+
+function ensureBaiduToken() {
+  if (!Storage.get('baidu_token') && BAIDU_DEFAULT_TOKEN) {
+    Storage.set('baidu_token', BAIDU_DEFAULT_TOKEN);
+    Storage.set('baidu_auth_time', Date.now());
+  }
+}
 
 function startBaiduAuth() {
   const url = 'https://openapi.baidu.com/oauth/2.0/authorize' +
@@ -727,6 +735,8 @@ function updateSettingsPage() {
 function init() {
   // Handle Baidu OAuth callback
   handleBaiduCallback();
+  // Auto-inject default Baidu token if not authorized
+  ensureBaiduToken();
 
   const pinSet = Storage.get('pin_set', false);
   const lockedUntil = Storage.get('locked_until', 0);
