@@ -787,6 +787,11 @@ function updateSettingsPage() {
 
 // ===== App Init =====
 function init() {
+  // Clear old Baidu data
+  Storage.remove('baidu_token');
+  Storage.remove('baidu_auth_time');
+  Storage.remove('baidu_default_token');
+
   // Handle Google Drive OAuth callback
   handleGDriveCallback();
   // Check Google Drive token
