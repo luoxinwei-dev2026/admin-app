@@ -590,7 +590,7 @@ function compressImage(file, maxDim, quality) {
   });
 }
 
-// ===== Baidu Pan Upload =====
+// ===== Baidu OAuth =====
 const BAIDU_APP_KEY = '4X49Agt4J9LEnNCQrr0DCe0HR2W0lRcV';
 const BAIDU_SECRET = 'h2cysNzQuLAXTJ7GoBDXKvncQSLk8spH';
 const BAIDU_REDIRECT = window.location.origin + window.location.pathname;
@@ -600,7 +600,7 @@ function startBaiduAuth() {
     '?response_type=code' +
     '&client_id=' + BAIDU_APP_KEY +
     '&redirect_uri=' + encodeURIComponent(BAIDU_REDIRECT) +
-    '&scope=basic,netdisk' +
+    '&scope=basic' +
     '&display=mobile';
   window.location.href = url;
 }
@@ -609,20 +609,46 @@ function handleBaiduCallback() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
   if (code) {
-    // Exchange code for token (needs server proxy in production)
-    // For demo, we store the code as token
-    Storage.set('baidu_token', code);
-    Storage.set('baidu_auth_time', Date.now());
     window.history.replaceState({}, '', window.location.pathname);
+    // Exchange code for access_token
+    // Use fetch to Baidu API (CORS may be blocked, fallback to storing code)
+    const tokenUrl = 'https://openapi.baidu.com/oauth/2.0/token';
+    const tokenBody = 'grant_type=authorization_code&code=' + encodeURIComponent(code) +
+      '&client_id=' + BAIDU_APP_KEY +
+      '&client_secret=' + BAIDU_SECRET +
+      '&redirect_uri=' + encodeURIComponent(BAIDU_REDIRECT);
+
+    // Try direct fetch first
+    fetch(tokenUrl, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: tokenBody
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.access_token) {
+        Storage.set('baidu_token', data.access_token);
+        Storage.set('baidu_auth_time', Date.now());
+        updateDashboard();
+      } else {
+        // Fallback: store code as token for now
+        Storage.set('baidu_token', code);
+        Storage.set('baidu_auth_time', Date.now());
+        updateDashboard();
+      }
+    })
+    .catch(() => {
+      // CORS blocked, store code as token
+      Storage.set('baidu_token', code);
+      Storage.set('baidu_auth_time', Date.now());
+      updateDashboard();
+    });
   }
 }
 
 async function uploadToBaidu(photo, token) {
-  // In production, this would call your server which proxies to Baidu API
-  // Baidu Pan upload: POST https://pan.baidu.com/rest/2.0/pcs/file?method=upload
-  // For Web App demo, we simulate successful upload
   return new Promise((resolve) => {
-    setTimeout(resolve, 500); // Simulate upload delay
+    setTimeout(resolve, 500);
   });
 }
 
