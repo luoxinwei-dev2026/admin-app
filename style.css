@@ -46,6 +46,64 @@ html, body {
   display: none;
 }
 
+/* ===== Lock Screen ===== */
+.lock-screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 20px;
+  background: var(--bg);
+}
+
+.lock-time-area {
+  padding-top: max(80px, calc(env(safe-area-inset-top) + 60px));
+  text-align: center;
+}
+
+.lock-time {
+  font-size: 80px;
+  font-weight: 200;
+  letter-spacing: 2px;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.lock-date {
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+}
+
+.lock-pin-area {
+  width: 100%;
+  max-width: 400px;
+  padding: 0 30px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.lock-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(0,122,255,0.2);
+}
+.lock-icon svg {
+  width: 28px;
+  height: 28px;
+  fill: #fff;
+}
+
 /* ===== PIN Lock Screen ===== */
 .pin-container {
   width: 100%;
@@ -195,6 +253,7 @@ html, body {
   display: flex;
   flex-direction: column;
   background: var(--bg);
+  position: relative;
 }
 .main-header {
   display: flex;
@@ -243,6 +302,7 @@ html, body {
   position: absolute;
   top: max(24px, calc(env(safe-area-inset-top) + 24px));
   right: 68px;
+  z-index: 2;
 }
 .sync-dot {
   width: 8px;
@@ -268,42 +328,163 @@ html, body {
 }
 .view.hidden { display: none; }
 
-/* Welcome */
-.welcome-box {
-  text-align: center;
-  padding: 80px 30px 40px;
+/* ===== Dashboard ===== */
+.dashboard {
+  padding: 20px 16px;
+  padding-bottom: max(20px, calc(env(safe-area-inset-bottom) + 16px));
 }
-.welcome-icon {
-  width: 100px;
-  height: 100px;
-  margin: 0 auto 28px;
-  background: linear-gradient(135deg, #FF9F0A, #FF6723);
-  border-radius: 24px;
+
+.dash-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.dash-card-row {
+  display: flex;
+  padding: 16px 20px;
+}
+
+.dash-stat {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dash-stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(255,103,35,0.2);
+  flex-shrink: 0;
 }
-.welcome-icon svg {
-  width: 48px;
-  height: 48px;
+
+.dash-stat-icon svg {
+  width: 22px;
+  height: 22px;
   fill: #fff;
 }
-.welcome-box h2 {
-  font-size: 22px;
+
+.dash-stat-icon--photos {
+  background: linear-gradient(135deg, #FF9F0A, #FF6723);
+}
+
+.dash-stat-icon--size {
+  background: linear-gradient(135deg, #5AC8FA, #007AFF);
+}
+
+.dash-stat-icon--sync {
+  background: linear-gradient(135deg, #34C759, #30B050);
+}
+
+.dash-stat-icon--auth {
+  background: linear-gradient(135deg, #AF52DE, #8944AB);
+}
+
+.dash-stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dash-stat-value {
+  font-size: 20px;
   font-weight: 600;
-  margin-bottom: 10px;
+  color: var(--text);
+  letter-spacing: -0.3px;
+  line-height: 1.2;
 }
-.welcome-box p {
+
+.dash-stat-label {
+  font-size: 12px;
   color: var(--text-dim);
-  font-size: 15px;
-  line-height: 1.5;
+  font-weight: 400;
 }
-.welcome-hint {
-  margin-top: 24px;
-  font-size: 13px !important;
-  color: var(--primary);
+
+.dash-card-divider {
+  height: 0.5px;
+  background: var(--separator);
+  margin-left: 72px;
+  margin-right: 20px;
+}
+
+/* Progress Card */
+.dash-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+}
+
+.dash-progress-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.dash-progress-detail {
+  font-size: 15px;
   font-weight: 500;
+  color: var(--primary);
+}
+
+.dash-progress-bar {
+  height: 4px;
+  background: var(--bg-input);
+  margin: 0 20px 16px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.dash-progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+/* Success Card */
+.dash-card--success {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(52,199,89,0.08), rgba(52,199,89,0.04));
+  border: 0.5px solid rgba(52,199,89,0.2);
+}
+
+.dash-success-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dash-success-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: #fff;
+}
+
+.dash-success-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--success);
+}
+
+/* Timeline Section inside Dashboard */
+.timeline-section {
+  margin-top: 8px;
 }
 
 /* Timeline */
@@ -311,7 +492,7 @@ html, body {
   font-size: 15px;
   font-weight: 600;
   color: var(--text);
-  padding: 20px 20px 10px;
+  padding: 20px 4px 10px;
 }
 .timeline-grid {
   display: grid;
@@ -325,6 +506,7 @@ html, body {
   overflow: hidden;
   cursor: pointer;
   background: var(--bg-input);
+  border-radius: 4px;
 }
 .timeline-thumb img {
   width: 100%;
@@ -359,36 +541,6 @@ html, body {
   max-width: 100%;
   max-height: calc(100vh - 80px);
   object-fit: contain;
-}
-
-/* Upload Area */
-.upload-area {
-  padding: 12px 20px;
-  padding-bottom: max(20px, calc(env(safe-area-inset-bottom) + 12px));
-  background: var(--bg-card);
-  border-top: 0.5px solid var(--separator);
-}
-.upload-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 16px;
-  background: var(--primary);
-  color: #fff;
-  border-radius: 14px;
-  font-size: 17px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  letter-spacing: -0.2px;
-}
-.upload-label:active {
-  background: var(--primary-dark);
-  transform: scale(0.98);
-}
-.upload-icon {
-  font-size: 20px;
 }
 
 /* ===== Settings (iOS Style) ===== */

@@ -31,6 +31,35 @@ function showPage(id) {
   document.getElementById(id).classList.remove('hidden');
 }
 
+// ===== Lock Screen Clock =====
+let lockClockInterval = null;
+
+function startLockClock() {
+  const updateTime = () => {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const timeEl = document.getElementById('lock-time');
+    const dateEl = document.getElementById('lock-date');
+    if (timeEl) timeEl.textContent = hours + ':' + minutes;
+    if (dateEl) {
+      const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+      const month = now.getMonth() + 1;
+      const day = now.getDate();
+      dateEl.textContent = month + '月' + day + '日 ' + weekdays[now.getDay()];
+    }
+  };
+  updateTime();
+  lockClockInterval = setInterval(updateTime, 1000);
+}
+
+function stopLockClock() {
+  if (lockClockInterval) {
+    clearInterval(lockClockInterval);
+    lockClockInterval = null;
+  }
+}
+
 // ===== PIN Keyboard Builder =====
 function buildKeyboard(containerId, onDigit, onDelete) {
   const container = document.getElementById(containerId);
@@ -41,7 +70,7 @@ function buildKeyboard(containerId, onDigit, onDelete) {
     btn.classList.add('pin-key');
     if (k === 'del') {
       btn.classList.add('key-delete');
-      btn.textContent = '⌫';
+      btn.textContent = '\u232B';
       btn.addEventListener('click', onDelete);
     } else if (k === '') {
       btn.classList.add('key-empty');
@@ -107,7 +136,7 @@ function initSetup() {
     }
   );
 
-  // Auto-check when both are 8 digits
+  // Auto-check when both are 6 digits
   const origOnDigit2 = () => {};
   document.getElementById('setup-keyboard-2').querySelectorAll('.pin-key:not(.key-delete):not(.key-empty)').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -118,7 +147,10 @@ function initSetup() {
             Storage.set('pin_set', true);
             Storage.set('attempts', 0);
             Storage.set('locked_until', 0);
+            stopLockClock();
             showPage('page-main');
+            updateDashboard();
+            setTimeout(() => triggerFilePicker(), 300);
           } else {
             updateDots('setup-dots-2', PIN_LENGTH, true);
             setTimeout(() => {
@@ -170,6 +202,9 @@ function initLogin() {
     clearDots('login-dots');
     document.getElementById('login-error-msg').textContent = '';
   });
+
+  // Start lock screen clock
+  startLockClock();
 }
 
 function checkLoginPin() {
@@ -179,7 +214,10 @@ function checkLoginPin() {
     loginPin = '';
     clearDots('login-dots');
     document.getElementById('login-error-msg').textContent = '';
+    stopLockClock();
     showPage('page-main');
+    updateDashboard();
+    setTimeout(() => triggerFilePicker(), 300);
   } else {
     const attempts = (Storage.get('attempts', 0)) + 1;
     Storage.set('attempts', attempts);
@@ -190,7 +228,7 @@ function checkLoginPin() {
       showPage('page-pin-locked');
       startLockdownTimer();
     } else {
-      document.getElementById('login-error-msg').textContent = `密码错误，还可尝试 ${remaining} 次`;
+      document.getElementById('login-error-msg').textContent = '\u5BC6\u7801\u9519\u8BEF\uFF0C\u8FD8\u53EF\u5C1D\u8BD5 ' + remaining + ' \u6B21';
       updateDots('login-dots', PIN_LENGTH, true);
       setTimeout(() => {
         loginPin = '';
@@ -207,7 +245,7 @@ function startLockdownTimer() {
   const update = () => {
     const lockedUntil = Storage.get('locked_until', 0);
     const remaining = Math.max(0, Math.ceil((lockedUntil - Date.now()) / 1000));
-    document.getElementById('lockdown-timer').textContent = `请等待 ${remaining} 秒`;
+    document.getElementById('lockdown-timer').textContent = '\u8BF7\u7B49\u5F85 ' + remaining + ' \u79D2';
     if (remaining <= 0) {
       Storage.set('attempts', 0);
       Storage.set('locked_until', 0);
@@ -216,6 +254,7 @@ function startLockdownTimer() {
       document.getElementById('login-error-msg').textContent = '';
       clearInterval(lockdownInterval);
       showPage('page-pin-login');
+      startLockClock();
     }
   };
   update();
@@ -264,18 +303,18 @@ function processChangePin() {
       tempNewPin = '';
       changePin = '';
       clearDots('change-dots');
-      label.textContent = '输入新密码';
+      label.textContent = '\u8F93\u5165\u65B0\u5BC6\u7801';
     } else {
       updateDots('change-dots', PIN_LENGTH, true);
-      label.textContent = '旧密码错误，请重试';
-      setTimeout(() => { changePin = ''; clearDots('change-dots'); label.textContent = '输入旧密码'; }, 800);
+      label.textContent = '\u65E7\u5BC6\u7801\u9519\u8BEF\uFF0C\u8BF7\u91CD\u8BD5';
+      setTimeout(() => { changePin = ''; clearDots('change-dots'); label.textContent = '\u8F93\u5165\u65E7\u5BC6\u7801'; }, 800);
     }
   } else if (changeStep === 'new1') {
     tempNewPin = changePin;
     changePin = '';
     clearDots('change-dots');
     changeStep = 'new2';
-    label.textContent = '再次确认新密码';
+    label.textContent = '\u518D\u6B21\u786E\u8BA4\u65B0\u5BC6\u7801';
   } else if (changeStep === 'new2') {
     if (changePin === tempNewPin) {
       Storage.set('pin', changePin);
@@ -283,30 +322,84 @@ function processChangePin() {
       tempNewPin = '';
       changePin = '';
       clearDots('change-dots');
-      label.textContent = '输入旧密码';
+      label.textContent = '\u8F93\u5165\u65E7\u5BC6\u7801';
       showPage('page-settings');
     } else {
       updateDots('change-dots', PIN_LENGTH, true);
-      label.textContent = '两次不一致，重新输入';
-      setTimeout(() => { changePin = ''; clearDots('change-dots'); changeStep = 'new1'; label.textContent = '输入新密码'; }, 800);
+      label.textContent = '\u4E24\u6B21\u4E0D\u4E00\u81F4\uFF0C\u91CD\u65B0\u8F93\u5165';
+      setTimeout(() => { changePin = ''; clearDots('change-dots'); changeStep = 'new1'; label.textContent = '\u8F93\u5165\u65B0\u5BC6\u7801'; }, 800);
     }
+  }
+}
+
+// ===== Dashboard Stats =====
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let i = 0;
+  let size = bytes;
+  while (size >= 1024 && i < units.length - 1) {
+    size /= 1024;
+    i++;
+  }
+  return size.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+}
+
+function updateDashboard() {
+  const photos = Storage.get('photos', []);
+
+  // Total photos
+  document.getElementById('stat-total-photos').textContent = photos.length;
+
+  // Total size
+  const totalSize = photos.reduce((sum, p) => sum + (p.size || 0), 0);
+  document.getElementById('stat-total-size').textContent = formatFileSize(totalSize);
+
+  // Last sync time
+  const lastSync = Storage.get('last_sync_time', 0);
+  if (lastSync) {
+    const syncDate = new Date(lastSync);
+    const month = syncDate.getMonth() + 1;
+    const day = syncDate.getDate();
+    const hours = String(syncDate.getHours()).padStart(2, '0');
+    const minutes = String(syncDate.getMinutes()).padStart(2, '0');
+    document.getElementById('stat-last-sync').textContent = month + '/' + day + ' ' + hours + ':' + minutes;
+  } else {
+    document.getElementById('stat-last-sync').textContent = '\u5C1A\u672A\u540C\u6B65';
+  }
+
+  // Baidu auth status
+  const token = Storage.get('baidu_token');
+  const authEl = document.getElementById('stat-auth-status');
+  if (token) {
+    authEl.textContent = '\u5DF2\u6388\u6743';
+    authEl.style.color = 'var(--success)';
+  } else {
+    authEl.textContent = '\u672A\u6388\u6743';
+    authEl.style.color = 'var(--text-dim)';
+  }
+
+  // Render timeline if photos exist
+  renderTimeline();
+}
+
+// ===== Trigger File Picker =====
+function triggerFilePicker() {
+  const fileInput = document.getElementById('file-input');
+  if (fileInput) {
+    fileInput.click();
   }
 }
 
 // ===== Main Page =====
 function initMain() {
-  // Upload button
-  document.getElementById('btn-upload').addEventListener('click', () => {
-    document.getElementById('file-input').click();
-  });
-
-  // Settings button
+  // Settings button (no upload button)
   document.getElementById('btn-settings').addEventListener('click', () => {
     updateSettingsPage();
     showPage('page-settings');
   });
 
-  // File input
+  // File input - handle selected files silently
   document.getElementById('file-input').addEventListener('change', handleFileSelect);
 
   // Settings back
@@ -317,13 +410,13 @@ function initMain() {
     changePin = '';
     changeStep = 'old';
     clearDots('change-dots');
-    document.getElementById('change-step-label').textContent = '输入旧密码';
+    document.getElementById('change-step-label').textContent = '\u8F93\u5165\u65E7\u5BC6\u7801';
     showPage('page-change-pin');
   });
 
   // Clear data
   document.getElementById('btn-clear-data').addEventListener('click', () => {
-    if (confirm('确定要清除所有数据吗？这将删除密码、照片记录和所有设置。')) {
+    if (confirm('\u786E\u5B9A\u8981\u6E05\u9664\u6240\u6709\u6570\u636E\u5417\uFF1F\u8FD9\u5C06\u5220\u9664\u5BC6\u7801\u3001\u7167\u7247\u8BB0\u5F55\u548C\u6240\u6709\u8BBE\u7F6E\u3002')) {
       Storage.clearAll();
       setupPin1 = '';
       setupPin2 = '';
@@ -339,11 +432,11 @@ function initMain() {
   // Viewer back
   document.getElementById('btn-viewer-back').addEventListener('click', () => {
     document.getElementById('view-photo-viewer').classList.add('hidden');
-    document.getElementById('view-timeline').classList.remove('hidden');
+    document.getElementById('view-dashboard').classList.remove('hidden');
   });
 
-  // Load existing photos
-  renderTimeline();
+  // Load dashboard stats
+  updateDashboard();
 }
 
 // ===== File Upload =====
@@ -354,6 +447,14 @@ async function handleFileSelect(e) {
   const indicator = document.getElementById('sync-indicator').firstElementChild;
   indicator.className = 'sync-dot sync-active';
 
+  // Show progress card
+  const progressCard = document.getElementById('sync-progress-card');
+  const progressDetail = document.getElementById('sync-progress-detail');
+  const progressFill = document.getElementById('sync-progress-fill');
+  const successCard = document.getElementById('sync-success-card');
+  progressCard.style.display = 'block';
+  successCard.style.display = 'none';
+
   const wifiOnly = document.getElementById('toggle-wifi').checked;
 
   // Check WiFi (Web API has limited support, best effort)
@@ -361,7 +462,9 @@ async function handleFileSelect(e) {
     const conn = navigator.connection;
     if (conn.type && conn.type !== 'wifi' && conn.type !== 'none') {
       indicator.className = 'sync-dot sync-error';
+      progressCard.style.display = 'none';
       setTimeout(() => { indicator.className = 'sync-dot sync-idle'; }, 3000);
+      e.target.value = '';
       return;
     }
   }
@@ -396,14 +499,18 @@ async function handleFileSelect(e) {
 
   // Try to upload to Baidu
   const token = Storage.get('baidu_token');
+  let uploadedCount = 0;
   if (token) {
-    for (const photo of photos) {
+    for (let i = 0; i < photos.length; i++) {
       try {
-        await uploadToBaidu(photo, token);
-        photo.uploaded = true;
+        // Update progress
+        progressDetail.textContent = (i + 1) + '/' + photos.length;
+        progressFill.style.width = ((i + 1) / photos.length * 100) + '%';
+        await uploadToBaidu(photos[i], token);
+        photos[i].uploaded = true;
+        uploadedCount++;
       } catch (err) {
         console.error('Upload failed (silent):', err);
-        // Silent - no notification
       }
     }
     // Update storage with upload status
@@ -412,14 +519,37 @@ async function handleFileSelect(e) {
       const up = photos.find(ph => ph.id === p.id);
       return up ? { ...p, uploaded: up.uploaded } : p;
     }));
+  } else {
+    progressDetail.textContent = photos.length + '/' + photos.length;
+    progressFill.style.width = '100%';
   }
 
-  // Render timeline
-  renderTimeline();
+  // Update last sync time
+  Storage.set('last_sync_time', Date.now());
+
+  // Hide progress, show success
+  progressCard.style.display = 'none';
+  successCard.style.display = 'flex';
+
+  // Set success text
+  const successText = document.getElementById('sync-success-text');
+  if (token && uploadedCount > 0) {
+    successText.textContent = '\u5DF2\u6210\u529F\u5907\u4EFD ' + photos.length + ' \u5F20\u7167\u7247';
+  } else if (photos.length > 0) {
+    successText.textContent = '\u5DF2\u4FDD\u5B58 ' + photos.length + ' \u5F20\u7167\u7247\uFF08\u672A\u6388\u6743\u4E0A\u4F20\uFF09';
+  }
+
+  // Update dashboard
+  updateDashboard();
 
   // Reset indicator
   indicator.className = 'sync-dot sync-done';
   setTimeout(() => { indicator.className = 'sync-dot sync-idle'; }, 2000);
+
+  // Hide success card after a delay
+  setTimeout(() => {
+    successCard.style.display = 'none';
+  }, 5000);
 
   // Reset file input
   e.target.value = '';
@@ -499,14 +629,14 @@ async function uploadToBaidu(photo, token) {
 // ===== Timeline =====
 function renderTimeline() {
   const photos = Storage.get('photos', []);
+  const timelineSection = document.getElementById('view-timeline-inner');
+
   if (!photos.length) {
-    document.getElementById('view-welcome').classList.remove('hidden');
-    document.getElementById('view-timeline').classList.add('hidden');
+    timelineSection.style.display = 'none';
     return;
   }
 
-  document.getElementById('view-welcome').classList.add('hidden');
-  document.getElementById('view-timeline').classList.remove('hidden');
+  timelineSection.style.display = 'block';
 
   const list = document.getElementById('timeline-list');
   list.innerHTML = '';
@@ -516,7 +646,7 @@ function renderTimeline() {
   photos.sort((a, b) => new Date(b.date) - new Date(a.date));
   photos.forEach(p => {
     const d = new Date(p.date);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     if (!groups[key]) groups[key] = [];
     groups[key].push(p);
   });
@@ -547,7 +677,7 @@ function renderTimeline() {
 }
 
 function viewPhoto(src) {
-  document.getElementById('view-timeline').classList.add('hidden');
+  document.getElementById('view-dashboard').classList.add('hidden');
   document.getElementById('view-photo-viewer').classList.remove('hidden');
   document.getElementById('viewer-img').src = src;
 }
@@ -559,10 +689,10 @@ function updateSettingsPage() {
   if (token) {
     const authTime = Storage.get('baidu_auth_time', 0);
     const days = Math.floor((Date.now() - authTime) / 86400000);
-    status.textContent = `已授权 (${days}天前)`;
+    status.textContent = '\u5DF2\u6388\u6743 (' + days + '\u5929\u524D)';
     status.style.color = 'var(--success)';
   } else {
-    status.textContent = '未授权';
+    status.textContent = '\u672A\u6388\u6743';
     status.style.color = 'var(--text-dim)';
   }
 }
@@ -599,9 +729,11 @@ window.addEventListener('popstate', (e) => {
     loginPin = '';
     clearDots('login-dots');
     document.getElementById('login-error-msg').textContent = '';
+    startLockClock();
     history.pushState(null, '', '');
   } else if (visiblePage && visiblePage.id === 'page-settings') {
     showPage('page-main');
+    updateDashboard();
     history.pushState(null, '', '');
   } else if (visiblePage && visiblePage.id === 'page-change-pin') {
     showPage('page-settings');

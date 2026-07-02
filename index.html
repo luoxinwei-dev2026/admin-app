@@ -32,17 +32,22 @@
   </div>
 </div>
 
-<!-- PIN 登录页面 -->
+<!-- PIN 登录页面（锁屏） -->
 <div id="page-pin-login" class="page hidden">
-  <div class="pin-container">
-    <div class="pin-icon">
-      <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM15.1 8H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/></svg>
+  <div class="lock-screen">
+    <div class="lock-time-area">
+      <div class="lock-time" id="lock-time">00:00</div>
+      <div class="lock-date" id="lock-date">1月1日 星期一</div>
     </div>
-    <h1 class="pin-title">输入密码</h1>
-    <p class="pin-subtitle" id="login-error-msg"></p>
-    <div class="pin-dots" id="login-dots"></div>
-    <div class="pin-keyboard" id="login-keyboard"></div>
-    <button class="pin-btn-clear" id="btn-clear-login">清除</button>
+    <div class="lock-pin-area">
+      <div class="lock-icon">
+        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM15.1 8H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/></svg>
+      </div>
+      <p class="pin-subtitle" id="login-error-msg"></p>
+      <div class="pin-dots" id="login-dots"></div>
+      <div class="pin-keyboard" id="login-keyboard"></div>
+      <button class="pin-btn-clear" id="btn-clear-login">清除</button>
+    </div>
   </div>
 </div>
 
@@ -64,9 +69,6 @@
     <div class="main-header">
       <h1 class="main-title">管理员</h1>
       <div class="header-actions">
-        <button class="icon-btn" id="btn-upload" title="上传照片">
-          <svg viewBox="0 0 24 24"><path d="M19 7h-8v6h-2l5 5 5-5h-2V7zm-14 11v-2h2v2h10v-2h2v2c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2z"/></svg>
-        </button>
         <button class="icon-btn" id="btn-settings" title="设置">
           <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
         </button>
@@ -77,20 +79,82 @@
       <div class="sync-dot sync-idle"></div>
     </div>
 
-    <div class="main-content" id="main-content">
-      <div id="view-welcome" class="view">
-        <div class="welcome-box">
-          <div class="welcome-icon">
-            <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-          </div>
-          <h2>欢迎使用相册备份</h2>
-          <p>点击下方按钮选择照片上传到百度网盘</p>
-          <p class="welcome-hint">上传全程静默进行，不会打扰你</p>
-        </div>
-      </div>
+    <!-- 隐藏的文件输入 -->
+    <input type="file" id="file-input" accept="image/*" multiple hidden>
 
-      <div id="view-timeline" class="view hidden">
-        <div class="timeline-list" id="timeline-list"></div>
+    <div class="main-content" id="main-content">
+      <!-- 状态仪表盘 -->
+      <div id="view-dashboard" class="view">
+        <div class="dashboard">
+          <!-- 备份统计卡片 -->
+          <div class="dash-card">
+            <div class="dash-card-row">
+              <div class="dash-stat">
+                <div class="dash-stat-icon dash-stat-icon--photos">
+                  <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                </div>
+                <div class="dash-stat-info">
+                  <span class="dash-stat-value" id="stat-total-photos">0</span>
+                  <span class="dash-stat-label">已备份照片</span>
+                </div>
+              </div>
+              <div class="dash-stat">
+                <div class="dash-stat-icon dash-stat-icon--size">
+                  <svg viewBox="0 0 24 24"><path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-4 7h20v-4H2v4zm2-3h2v2H4v-2z"/></svg>
+                </div>
+                <div class="dash-stat-info">
+                  <span class="dash-stat-value" id="stat-total-size">0 B</span>
+                  <span class="dash-stat-label">存储用量</span>
+                </div>
+              </div>
+            </div>
+            <div class="dash-card-divider"></div>
+            <div class="dash-card-row">
+              <div class="dash-stat">
+                <div class="dash-stat-icon dash-stat-icon--sync">
+                  <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+                </div>
+                <div class="dash-stat-info">
+                  <span class="dash-stat-value" id="stat-last-sync">尚未同步</span>
+                  <span class="dash-stat-label">上次同步</span>
+                </div>
+              </div>
+              <div class="dash-stat">
+                <div class="dash-stat-icon dash-stat-icon--auth">
+                  <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM15.1 8H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/></svg>
+                </div>
+                <div class="dash-stat-info">
+                  <span class="dash-stat-value" id="stat-auth-status">未授权</span>
+                  <span class="dash-stat-label">百度网盘</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 同步进度卡片 -->
+          <div class="dash-card" id="sync-progress-card" style="display: none;">
+            <div class="dash-progress-header">
+              <span class="dash-progress-title">正在同步</span>
+              <span class="dash-progress-detail" id="sync-progress-detail">0/0</span>
+            </div>
+            <div class="dash-progress-bar">
+              <div class="dash-progress-fill" id="sync-progress-fill"></div>
+            </div>
+          </div>
+
+          <!-- 上传成功提示卡片 -->
+          <div class="dash-card dash-card--success" id="sync-success-card" style="display: none;">
+            <div class="dash-success-icon">
+              <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            </div>
+            <span class="dash-success-text" id="sync-success-text">备份完成</span>
+          </div>
+
+          <!-- 照片时间线 -->
+          <div id="view-timeline-inner" class="timeline-section" style="display: none;">
+            <div class="timeline-list" id="timeline-list"></div>
+          </div>
+        </div>
       </div>
 
       <div id="view-photo-viewer" class="view hidden">
@@ -99,14 +163,6 @@
           <img class="viewer-img" id="viewer-img" src="" alt="">
         </div>
       </div>
-    </div>
-
-    <div class="upload-area">
-      <input type="file" id="file-input" accept="image/*" multiple hidden>
-      <label for="file-input" class="upload-label">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M19 7h-8v6h-2l5 5 5-5h-2V7zm-14 11v-2h2v2h10v-2h2v2c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2z"/></svg>
-        <span>选择照片上传</span>
-      </label>
     </div>
   </div>
 </div>
